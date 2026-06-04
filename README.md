@@ -1,25 +1,44 @@
-# AI Món Ăn
+# Day06-[Tên Lớp]-Nhom[XX]: AI Món Ăn (AI Food Allergen Guide)
 
-Web demo gợi ý nhà hàng và thực đơn theo dị ứng — theo flowchart onboarding → chat + bản đồ → menu gắn nhãn xanh/đỏ/vàng.
+**Mô tả ngắn gọn:** 
+AI Món Ăn là ứng dụng Web App thông minh tích hợp AI hỗ trợ người dùng có chế độ ăn kiêng hoặc dị ứng thực phẩm. Dựa vào hồ sơ sức khỏe và lựa chọn dị ứng, hệ thống sẽ tự động quét menu, sàng lọc và dán nhãn (Xanh - An toàn, Đỏ - Nguy hiểm, Vàng - Cần xác nhận) cho từng món ăn tại các nhà hàng, giúp người dùng an tâm khi ra quyết định ăn uống.
 
-## Dữ liệu
+## Danh sách thành viên
 
-- **30 nhà hàng** quanh Hà Nội (tọa độ giả lập trên bản đồ)
-- Mỗi quán **≥ 15 món** Việt Nam (phở, bún, cơm, bánh mì, lẩu, hải sản, chay, Huế, nhậu…)
-- Hồ sơ & xác nhận món vàng lưu **localStorage**
+| Họ và tên | Mã học viên | Phân công công việc |
+| :--- | :--- | :--- |
+| [Tên thành viên 1] | [Mã HV 1] | Dựng UI/UX, tích hợp bản đồ & React components |
+| [Tên thành viên 2] | [Mã HV 2] | Thiết kế luồng Prompt, viết SPEC, kiểm thử AI |
+| [Tên thành viên 3] | [Mã HV 3] | Tích hợp API AI, xử lý logic phân loại món ăn (Xanh/Đỏ/Vàng) |
 
-## Chạy local
+## Luồng chức năng chính (Flow Demo)
 
-```bash
-npm install
-npm run dev
-```
+1. **Onboarding:** Đăng nhập (demo) → Khai báo hồ sơ cá nhân → Chọn các thành phần bị dị ứng.
+2. **Giao diện chính:**
+   - **Bên trái (AI Chat):** Trợ lý ảo gợi ý các quán ăn an toàn nhất dựa trên hồ sơ, giải đáp về nguyên liệu và chi tiết từng món.
+   - **Bên phải (Bản đồ & Menu):** Hiển thị 30 nhà hàng. Khi chọn quán, menu hiển thị các món ăn được AI gắn nhãn (Xanh, Đỏ, Vàng).
+3. **Luồng giải quyết bất định (Món Vàng):** Khi món chưa rõ thành phần gây dị ứng, người dùng yêu cầu nhà hàng xác nhận → AI cập nhật nhãn Xanh/Đỏ phù hợp (lưu vào localStorage).
 
-Mở URL in ra terminal (thường `http://localhost:5173`).
+## Dữ liệu và Công nghệ đã sử dụng
 
-## Luồng chính
+- **Frontend:** React, TypeScript, Vite. Giao diện giả lập thiết bị (DevicePreviewShell).
+- **AI & Logic:** AI Chat phân tích món ăn theo dị ứng người dùng.
+- **Database (Mock):** 
+  - 30 nhà hàng quanh Hà Nội (tọa độ giả lập trên bản đồ).
+  - Mỗi quán ≥ 15 món Việt Nam (phở, bún, cơm, bánh mì, lẩu, chay, nhậu…).
+- **Lưu trữ:** Dữ liệu hồ sơ người dùng và trạng thái xác nhận "Món Vàng" được lưu ở `localStorage`.
 
-1. Đăng nhập demo → hồ sơ → chọn dị ứng
-2. **Trái:** AI chat (gợi ý quán theo điểm món xanh/tổng, hỏi nguyên liệu, chi tiết món)
-3. **Phải:** Bản đồ 30 pin → chọn quán → menu có nhãn
-4. Món **vàng:** mô phỏng nhà hàng xác nhận → cập nhật xanh/đỏ
+## Hướng dẫn chạy Prototype (Local)
+
+**Yêu cầu hệ thống:** Node.js (phiên bản 18 trở lên).
+
+1. Clone repo này về máy.
+2. Cài đặt các thư viện phụ thuộc:
+   ```bash
+   npm install
+   ```
+3. Khởi động môi trường dev:
+   ```bash
+   npm run dev
+   ```
+4. Mở trình duyệt và truy cập vào URL được in ra trong terminal (thường là `http://localhost:5173`).
