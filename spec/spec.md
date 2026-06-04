@@ -63,8 +63,8 @@ Con người (người dùng và nhà hàng) vẫn giữ quyền quyết định
 
 ## 8. Phân công
 
-- **Đỗ Quốc An (2A202600952):** Phụ trách quản lý dự án, viết tài liệu SPEC và phân tích AI Product Canvas. Khi demo: Trình bày về "Nỗi đau người dùng" và quyết định chọn "Tăng năng lực (Augment)".
-- **Nguyễn Khánh Linh (2A202600856):** Thiết kế UX/UI, xây dựng luồng Onboarding và giao diện Chatbot. Khi demo: Phụ trách thao tác Demo trực tiếp trên màn hình (Đường thuận - Test case 1).
-- **Trần Diệu Linh (2A202600875):** Kỹ sư Prompt (Prompt Engineering), thử nghiệm và xử lý các trường hợp AI bị ảo giác. Khi demo: Thao tác Demo tính năng dán "Nhãn Vàng" và xử lý luồng bất định (Test case 2).
-- **Thân Minh Hiếu (2A202600854):** Kỹ sư dữ liệu, xây dựng Ma trận từ khóa dị ứng (Allergen Matrix) và logic thuật toán `tagDish()`. Khi demo: Phụ trách trả lời Q&A về Rule-based system và độ chính xác của bộ lọc.
-- **Trần Minh Quang (2A202600924):** Backend & Tích hợp hệ thống, xử lý API OpenRouter và quản lý trạng thái qua LocalStorage. Khi demo: Trả lời Q&A về luồng dữ liệu, bảo mật và khả năng mở rộng kiến trúc.
+- **Đỗ Quốc An (2A202600952):** Phụ trách quản lý dự án, viết tài liệu SPEC. Khi demo: Trình bày về workflow dự án và scoring matrix.
+- **Nguyễn Khánh Linh (2A202600856):** Thiết kế UX/UI, xây dựng luồng Onboarding và giao diện Chatbot. Kiểm thử và cải thiện prompt.
+- **Trần Diệu Linh (2A202600875):** Kỹ sư Prompt (Prompt Engineering), thử nghiệm và xử lý các trường hợp AI bị ảo giác. Khi demo: Thao tác Demo tính năng dán "Nhãn Vàng" và xử lý luồng bất định.Khi demo: Phụ trách thao tác Demo trực tiếp trên màn hình.
+- **Thân Minh Hiếu (2A202600854):** Kỹ sư dữ liệu, xây dựng Ma trận từ khóa dị ứng (Allergen Matrix) và logic thuật toán `tagDish()`. Khi demo: Phụ trách trả lời Q&A về Rule-based system và độ chính xác của bộ lọc.Xử lý API OpenRouter và quản lý trạng thái qua LocalStorage.
+- **Trần Minh Quang (2A202600924):** Backend & Tích hợp hệ thống, khi demo: Trả lời Q&A về luồng dữ liệu, bảo mật và khả năng mở rộng kiến trúc.
