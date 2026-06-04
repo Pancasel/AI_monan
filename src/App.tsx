@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { DevicePreviewShell } from "./components/DevicePreviewShell";
 import { Onboarding } from "./components/Onboarding";
 import { MainApp } from "./components/MainApp";
 import { loadAuth, loadProfile } from "./lib/storage";
@@ -19,9 +20,11 @@ export default function App() {
     return <div className="app-loading">Đang tải…</div>;
   }
 
-  if (!profile) {
-    return <Onboarding onComplete={setProfile} />;
-  }
+  const appContent = !profile ? (
+    <Onboarding onComplete={setProfile} />
+  ) : (
+    <MainApp profile={profile} onLogout={() => setProfile(null)} onProfileUpdate={setProfile} />
+  );
 
-  return <MainApp profile={profile} onLogout={() => setProfile(null)} onProfileUpdate={setProfile} />;
+  return <DevicePreviewShell>{appContent}</DevicePreviewShell>;
 }

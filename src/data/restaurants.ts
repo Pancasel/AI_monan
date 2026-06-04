@@ -1,5 +1,5 @@
 import type { Dish, Restaurant } from "../types";
-import { DISH_CATALOG, type DishTemplate } from "./dishCatalog";
+import { DISH_CATALOG } from "./dishCatalog";
 import { EXTRA_RESTAURANT_TEMPLATES } from "./extraRestaurants";
 import { getDishImage, getRestaurantImage } from "../lib/restaurantUi";
 
@@ -41,6 +41,17 @@ const RESTAURANT_TEMPLATES: {
   { name: "Lẩu Mắm Miền Tây", cuisine: "Lẩu", district: "Đống Đa", address: "77 Chùa Bộc", catalogKey: "lau", rating: 4.4 },
   { name: "Tôm Hùm Alaska", cuisine: "Hải sản", district: "Tây Hồ", address: "200 Quảng An", catalogKey: "haiSan", rating: 4.8 },
   { name: "Bánh Mì & Cà Phê Sáng", cuisine: "Bánh mì", district: "Cầu Giấy", address: "9 Nguyễn Phong Sắc", catalogKey: "banhmi", rating: 4.3 },
+  { name: "Mì Quảng Bà Mua", cuisine: "Mì Quảng", district: "Hoàn Kiếm", address: "12 Hàng Bông", catalogKey: "miQuang", rating: 4.5 },
+  { name: "Mì Quảng 1A", cuisine: "Mì Quảng", district: "Đống Đa", address: "1A Nguyễn Văn Huyên", catalogKey: "miQuang", rating: 4.3 },
+  { name: "Bánh Cuốn Gia Truyền", cuisine: "Bánh cuốn", district: "Ba Đình", address: "14 Mai Hắc Đế", catalogKey: "banhCuon", rating: 4.6 },
+  { name: "Bánh Cuốn Thanh Trì", cuisine: "Bánh cuốn", district: "Hoàn Kiếm", address: "66 Hàng Bồ", catalogKey: "banhCuon", rating: 4.4 },
+  { name: "Bánh Xèo Sài Gòn", cuisine: "Bánh xèo", district: "Cầu Giấy", address: "25 Phạm Tháo", catalogKey: "banhXeo", rating: 4.4 },
+  { name: "Bánh Xèo Miền Tây", cuisine: "Bánh xèo", district: "Tây Hồ", address: "18 Âu Cơ", catalogKey: "banhXeo", rating: 4.2 },
+  { name: "Xôi Yến Hà Nội", cuisine: "Xôi", district: "Hoàn Kiếm", address: "35 Nguyễn Hữu Huân", catalogKey: "xoi", rating: 4.5 },
+  { name: "Xôi Xéo Cô Tấm", cuisine: "Xôi", district: "Ba Đình", address: "8 Nguyễn Trung Trực", catalogKey: "xoi", rating: 4.3 },
+  { name: "Nem Nướng Nha Trang 39", cuisine: "Nem nướng", district: "Hai Bà Trưng", address: "39 Lê Thanh Nghị", catalogKey: "nemNuong", rating: 4.4 },
+  { name: "Chả Cá Thăng Long", cuisine: "Chả cá", district: "Ba Đình", address: "19-21 Ngô Thì Nhậm", catalogKey: "chaCa", rating: 4.7 },
+  { name: "Chả Cá Hà Thành", cuisine: "Chả cá", district: "Hoàn Kiếm", address: "106 K1 Giảng Võ", catalogKey: "chaCa", rating: 4.5 },
   ...EXTRA_RESTAURANT_TEMPLATES,
 ];
 
@@ -56,16 +67,98 @@ const DISTRICT_CENTERS: Record<string, { lat: number; lng: number }> = {
 
 const FALLBACK_CENTER = { lat: 21.0285, lng: 105.8542 };
 
+const MENU_SIZE = 14;
+
+/** Từ khóa theo loại quán — mỗi quán ưu tiên món cùng chuyên môn */
+function focusKeywords(cuisine: string, catalogKey: keyof typeof DISH_CATALOG): string[] {
+  const c = cuisine.toLowerCase();
+  const keys: string[] = [];
+  if (c.includes("phở gà") || c.includes("pho ga")) keys.push("phở gà", "gà", "lòng gà");
+  else if (c.includes("phở cuốn")) keys.push("phở cuốn", "cuốn");
+  else if (c.includes("phở")) keys.push("phở", "bò", "quẩy", "chả", "nem");
+  if (c.includes("bún chả")) keys.push("bún chả", "chả");
+  else if (c.includes("bún bò") || c.includes("huế")) keys.push("bún bò", "huế");
+  else if (c.includes("bún riêu")) keys.push("bún riêu", "riêu");
+  else if (c.includes("bún đậu")) keys.push("bún đậu", "mắm tôm", "đậu");
+  else if (c.includes("bún thang")) keys.push("bún thang");
+  else if (c.includes("bún")) keys.push("bún");
+  if (c.includes("cơm tấm")) keys.push("cơm tấm", "sườn", "bì", "chả");
+  else if (c.includes("cơm gà")) keys.push("cơm gà", "gà");
+  else if (c.includes("cơm")) keys.push("cơm");
+  if (c.includes("bánh mì")) keys.push("bánh mì");
+  if (c.includes("lẩu")) keys.push("lẩu");
+  if (c.includes("hải sản") || c.includes("ốc")) keys.push("tôm", "cua", "mực", "ốc", "nghêu", "sò");
+  if (c.includes("chay")) keys.push("chay", "đậu", "nấm");
+  if (c.includes("nhậu") || c.includes("bia")) keys.push("gà", "lòng", "nem", "bia");
+  if (c.includes("mì quảng")) keys.push("mì quảng", "quảng");
+  if (c.includes("bánh cuốn")) keys.push("bánh cuốn", "cuốn");
+  if (c.includes("bánh xèo")) keys.push("bánh xèo", "khọt");
+  if (c.includes("xôi")) keys.push("xôi");
+  if (c.includes("nem nướng")) keys.push("nem nướng", "nem");
+  if (c.includes("chả cá")) keys.push("chả cá", "cá lăng", "thì là");
+
+  if (keys.length === 0) {
+    const fallback: Partial<Record<keyof typeof DISH_CATALOG, string[]>> = {
+      pho: ["phở"],
+      bun: ["bún"],
+      com: ["cơm"],
+      banhmi: ["bánh mì"],
+      lau: ["lẩu"],
+      haiSan: ["tôm", "cua", "mực"],
+      chay: ["chay"],
+      monHue: ["huế", "bún bò"],
+      quanNhau: ["gà", "lòng"],
+      miQuang: ["mì quảng"],
+      banhCuon: ["bánh cuốn"],
+      banhXeo: ["bánh xèo"],
+      xoi: ["xôi"],
+      nemNuong: ["nem"],
+      chaCa: ["chả cá"],
+    };
+    return fallback[catalogKey] ?? [];
+  }
+  return keys;
+}
+
+function dishFocusScore(name: string, keywords: string[]): number {
+  const n = name.toLowerCase();
+  let score = 0;
+  for (const kw of keywords) {
+    if (n.includes(kw)) score += 10;
+  }
+  return score;
+}
+
+function hashId(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 997;
+  return h;
+}
+
+/** Mỗi quán ~14 món — cùng loại hình nhưng khác quán sẽ khác thực đơn */
 function buildMenu(
   restaurantId: string,
   catalogKey: keyof typeof DISH_CATALOG,
   cuisine: string
 ): Dish[] {
   const templates = DISH_CATALOG[catalogKey];
-  return templates.map((t: DishTemplate, i) => ({
+  const keywords = focusKeywords(cuisine, catalogKey);
+  const seed = hashId(restaurantId);
+
+  const ranked = templates
+    .map((t, index) => ({
+      t,
+      index,
+      score: dishFocusScore(t.name, keywords) + ((index + seed) % 11),
+    }))
+    .sort((a, b) => b.score - a.score || a.index - b.index);
+
+  const picked = ranked.slice(0, MENU_SIZE).sort((a, b) => a.index - b.index);
+
+  return picked.map(({ t }, i) => ({
     id: `${restaurantId}-d${i + 1}`,
     name: t.name,
-    price: t.price + (i % 3) * 2000,
+    price: t.price + (seed % 3) * 1000 + (i % 2) * 1000,
     description: t.description,
     ingredients: [...t.ingredients],
     ambiguous: t.ambiguous,

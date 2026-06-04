@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Restaurant } from "../types";
@@ -70,24 +70,12 @@ interface MapPanelProps {
 }
 
 export function MapPanel({ restaurants, selectedId, onSelect, userLocation }: MapPanelProps) {
-  const [search, setSearch] = useState("");
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [routeLoading, setRouteLoading] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
 
   const selected = restaurants.find((r) => r.id === selectedId);
   const { label: travelLabel } = useTravelTime(userLocation, selected);
-
-  const visible = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return restaurants;
-    return restaurants.filter(
-      (r) =>
-        r.name.toLowerCase().includes(q) ||
-        r.cuisine.toLowerCase().includes(q) ||
-        r.district.toLowerCase().includes(q)
-    );
-  }, [restaurants, search]);
 
   const fetchRoute = useCallback(async () => {
     if (!selected || !userLocation) return;
@@ -120,17 +108,6 @@ export function MapPanel({ restaurants, selectedId, onSelect, userLocation }: Ma
 
   return (
     <div className="map-panel">
-      <div className="map-toolbar">
-        <input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Tìm quán, khu vực..."
-          className="map-search"
-        />
-        <span className="map-count">{visible.length} quán gần bạn</span>
-      </div>
-
       {selected && (
         <div className="map-directions-bar">
           {travelLabel && (
@@ -193,7 +170,7 @@ export function MapPanel({ restaurants, selectedId, onSelect, userLocation }: Ma
           )}
           {userLocation && !selectedId && <FlyToUser location={userLocation} />}
           {selected && <FlyTo lat={selected.lat} lng={selected.lng} />}
-          {visible.map((r) => (
+          {restaurants.map((r) => (
             <RestaurantMarker
               key={r.id}
               restaurant={r}

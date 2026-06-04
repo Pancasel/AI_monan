@@ -7,8 +7,6 @@ interface ChatPanelProps {
   profile: UserProfile;
   userLocation?: [number, number] | null;
   onFocusRestaurant?: (id: string) => void;
-  externalPrompt?: string | null;
-  onExternalPromptConsumed?: () => void;
   onLogout?: () => void;
   onEditProfile?: () => void;
 }
@@ -17,8 +15,6 @@ export function ChatPanel({
   profile,
   userLocation,
   onFocusRestaurant,
-  externalPrompt,
-  onExternalPromptConsumed,
   onLogout,
   onEditProfile,
 }: ChatPanelProps) {
@@ -98,13 +94,6 @@ export function ChatPanel({
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
-  useEffect(() => {
-    if (externalPrompt) {
-      send(externalPrompt);
-      onExternalPromptConsumed?.();
-    }
-  }, [externalPrompt]);
-
   return (
     <div className="chat-panel">
       <header className="chat-header">
@@ -180,7 +169,7 @@ export function ChatPanel({
         <input
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Hỏi về quán, món, dị ứng..."
+          placeholder="Hỏi quán, món, dị ứng..."
           disabled={loading}
         />
         <button type="submit" className="chat-send" disabled={loading} aria-label="Gửi">

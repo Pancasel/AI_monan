@@ -8,7 +8,6 @@ interface RestaurantMenuPanelProps {
   profile: UserProfile;
   travelLabel?: string | null;
   onClose: () => void;
-  onAskAi: (question: string) => void;
   onMenuUpdated: () => void;
 }
 
@@ -17,7 +16,6 @@ export function RestaurantMenuPanel({
   profile,
   travelLabel,
   onClose,
-  onAskAi,
   onMenuUpdated,
 }: RestaurantMenuPanelProps) {
   const tagged = tagMenu(restaurant.menu, profile);
@@ -123,12 +121,6 @@ export function RestaurantMenuPanel({
             </div>
           </article>
         ))}
-      </div>
-
-      <div className="menu-panel-footer">
-        <button type="button" onClick={() => onAskAi(`Cho tui biết thêm về ${restaurant.name}`)}>
-          Hỏi AI về quán
-        </button>
       </div>
     </aside>
   );

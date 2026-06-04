@@ -20,7 +20,6 @@ export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
   const userLocation = useUserLocation();
   const restaurants = useRestaurants(dataVersion, userLocation);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [chatPrompt, setChatPrompt] = useState<string | null>(null);
   const [menuKey, setMenuKey] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -57,8 +56,6 @@ export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
             profile={profile}
             userLocation={userLocation}
             onFocusRestaurant={handleSelectRestaurant}
-            externalPrompt={chatPrompt}
-            onExternalPromptConsumed={() => setChatPrompt(null)}
             onLogout={handleLogout}
             onEditProfile={() => setShowProfile(true)}
           />
@@ -78,7 +75,6 @@ export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
               profile={profile}
               travelLabel={travelLabel}
               onClose={() => setSelectedId(null)}
-              onAskAi={(q) => setChatPrompt(q)}
               onMenuUpdated={refreshRestaurants}
             />
           )}

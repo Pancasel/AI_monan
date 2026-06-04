@@ -41,6 +41,22 @@ function normalize(text: string): string {
   return text.toLowerCase().normalize("NFC");
 }
 
+const OUT_OF_SCOPE_PATTERNS = [
+  /code|lập trình|lap trinh|python|javascript|react|api key|openrouter|prompt hệ thống|source code|mã nguồn/,
+  /thời tiết|thoi tiet|bóng đá|bong da|chính trị|chinh tri|tin tức|tin tuc/,
+  /làm sao (để )?build|xây app|xay app|cách làm app|tech stack|framework/,
+  /viết (bài|essay|thơ)|giải bài|toán học|vật lý|hóa học/,
+];
+
+function isOutOfScope(text: string): boolean {
+  const t = normalize(text);
+  return OUT_OF_SCOPE_PATTERNS.some((re) => re.test(t));
+}
+
+function outOfScopeReply(): string {
+  return "Câu hỏi này nằm ngoài phạm vi của AI Món Ăn. Mình chỉ hỗ trợ gợi ý quán và món theo dị ứng của bạn.";
+}
+
 const CUISINE_KEYWORDS: { keywords: string[]; filter: (r: Restaurant) => boolean }[] = [
   {
     keywords: ["bún bò", "bun bo", "bún bò huế"],
@@ -92,6 +108,49 @@ const CUISINE_KEYWORDS: { keywords: string[]; filter: (r: Restaurant) => boolean
   {
     keywords: ["nhậu", "nhau", "bia"],
     filter: (r) => normalize(r.cuisine).includes("nhậu") || normalize(r.name).includes("bia"),
+  },
+  {
+    keywords: ["mì quảng", "mi quang"],
+    filter: (r) =>
+      normalize(r.cuisine).includes("mì quảng") ||
+      r.menu.some((d) => normalize(d.name).includes("mì quảng")),
+  },
+  {
+    keywords: ["bánh cuốn", "banh cuon"],
+    filter: (r) =>
+      normalize(r.cuisine).includes("bánh cuốn") ||
+      r.menu.some((d) => normalize(d.name).includes("bánh cuốn")),
+  },
+  {
+    keywords: ["bánh xèo", "banh xeo"],
+    filter: (r) =>
+      normalize(r.cuisine).includes("bánh xèo") ||
+      r.menu.some((d) => normalize(d.name).includes("bánh xèo")),
+  },
+  {
+    keywords: ["xôi", "xoi"],
+    filter: (r) =>
+      normalize(r.cuisine).includes("xôi") || r.menu.some((d) => normalize(d.name).includes("xôi")),
+  },
+  {
+    keywords: ["nem nướng", "nem nuong"],
+    filter: (r) =>
+      normalize(r.cuisine).includes("nem nướng") ||
+      r.menu.some((d) => normalize(d.name).includes("nem nướng")),
+  },
+  {
+    keywords: ["chả cá", "cha ca"],
+    filter: (r) =>
+      normalize(r.cuisine).includes("chả cá") ||
+      r.menu.some((d) => normalize(d.name).includes("chả cá")),
+  },
+  {
+    keywords: ["chay", "ăn chay", "quán chay"],
+    filter: (r) => normalize(r.cuisine).includes("chay"),
+  },
+  {
+    keywords: ["huế", "hue"],
+    filter: (r) => normalize(r.cuisine).includes("huế") || normalize(r.name).includes("huế"),
   },
 ];
 
@@ -213,6 +272,12 @@ export function classifyQuestion(text: string): QuestionKind {
     t.includes("bún") ||
     t.includes("cơm") ||
     t.includes("bánh mì") ||
+    t.includes("bánh cuốn") ||
+    t.includes("bánh xèo") ||
+    t.includes("mì quảng") ||
+    t.includes("xôi") ||
+    t.includes("nem nướng") ||
+    t.includes("chả cá") ||
     t.includes("lẩu")
   ) {
     return "dish";
@@ -227,7 +292,7 @@ function formatRestaurantList(
   intro: string
 ): string {
   if (ranked.length === 0) {
-    return "Mình chưa tìm thấy quán phù hợp với yêu cầu này. Thử hỏi \"Gợi ý quán phù hợp với tui\" hoặc chọn loại món cụ thể nhé.";
+    return "Mình chưa tìm thấy quán phù hợp với yêu cầu này. Thử hỏi loại món hoặc tên quán cụ thể nhé.";
   }
   const allergyNote =
     profile.allergies.length > 0 || profile.customAllergyNotes?.trim()
@@ -242,6 +307,10 @@ function formatRestaurantList(
 }
 
 export function generateAiReply(userText: string, profile: UserProfile): string {
+  if (isOutOfScope(userText)) {
+    return outOfScopeReply();
+  }
+
   const kind = classifyQuestion(userText);
   const t = normalize(userText);
 
@@ -340,7 +409,7 @@ export function generateAiReply(userText: string, profile: UserProfile): string 
     profile.allergies.length > 0 || profile.customAllergyNotes?.trim()
       ? `\n\nMình nhớ bạn dị ứng: **${allergyLabels(profile)}**.`
       : "";
-  return `Xin chào${name}! Mình có thể gợi ý quán theo dị ứng, tra nguyên liệu món, hoặc tìm quán chay / top rating.${allergyInfo}\n\nHỏi trực tiếp tên món hoặc loại quán bạn muốn nhé.`;
+  return `Xin chào${name}! Mình gợi ý quán theo dị ứng, tra nguyên liệu món, quán chay và top rating.${allergyInfo}\n\nHỏi tên món, loại quán hoặc khu vực bạn muốn nhé.`;
 }
 
 function restaurantCardHtml(

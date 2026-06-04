@@ -29,4 +29,8 @@ export const EXTRA_RESTAURANT_TEMPLATES: {
   { name: "Hải Sản 36", cuisine: "Hải sản", district: "Hai Bà Trưng", address: "36 Trần Nhân Tông", catalogKey: "haiSan", rating: 4.4 },
   { name: "Chay Lotus", cuisine: "Chay", district: "Cầu Giấy", address: "10 Phạm Hùng", catalogKey: "chay", rating: 4.6 },
   { name: "Quán Nhậu Đồng Quê", cuisine: "Nhậu", district: "Đống Đa", address: "55 Chùa Láng", catalogKey: "quanNhau", rating: 4.3 },
+  { name: "Mì Quảng Cô Ba", cuisine: "Mì Quảng", district: "Hai Bà Trưng", address: "22 Bùi Thị Xuân", catalogKey: "miQuang", rating: 4.4 },
+  { name: "Bánh Cuốn Kỳ Đồng", cuisine: "Bánh cuốn", district: "Đống Đa", address: "11 Kỳ Đồng", catalogKey: "banhCuon", rating: 4.3 },
+  { name: "Xôi Vò Bà Già", cuisine: "Xôi", district: "Cầu Giấy", address: "4 Ngõ 12 Phạm Hùng", catalogKey: "xoi", rating: 4.2 },
+  { name: "Nem Nướng 64", cuisine: "Nem nướng", district: "Hoàn Kiếm", address: "64 Trần Hưng Đạo", catalogKey: "nemNuong", rating: 4.5 },
 ];
