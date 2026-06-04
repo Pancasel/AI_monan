@@ -55,7 +55,6 @@ Khi người dùng gõ tin nhắn vào khung chat (ví dụ: *"Tìm quán bún c
 3. **Sinh phản hồi (Response Generation):**
    - Sắp xếp top 5 quán an toàn nhất.
    - Định dạng văn bản trả về (Markdown & HTML) cho hiển thị thẻ nhà hàng (Restaurant Card).
-   - (Tùy chọn) Gửi payload gồm Lịch sử chat + Profile lên `chatApi.ts` để LLM viết lại phản hồi cho mềm mại hơn.
 
 ---
 
