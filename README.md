@@ -7,9 +7,11 @@ AI Món Ăn là ứng dụng Web App thông minh tích hợp AI hỗ trợ ngư�
 
 | Họ và tên | Mã học viên | Phân công công việc |
 | :--- | :--- | :--- |
-| [Tên thành viên 1] | [Mã HV 1] | Dựng UI/UX, tích hợp bản đồ & React components |
-| [Tên thành viên 2] | [Mã HV 2] | Thiết kế luồng Prompt, viết SPEC, kiểm thử AI |
-| [Tên thành viên 3] | [Mã HV 3] | Tích hợp API AI, xử lý logic phân loại món ăn (Xanh/Đỏ/Vàng) |
+| Đỗ Quốc An | 2A202600952 | Quản lý dự án, viết tài liệu SPEC, phân tích AI Product Canvas |
+| Nguyễn Khánh Linh | 2A202600856 | Dựng UI/UX, tích hợp bản đồ & React components, luồng Onboarding |
+| Trần Diệu Linh | 2A202600875 | Prompt Engineering, thiết kế luồng xử lý AI ảo giác & Nhãn Vàng |
+| Thân Minh Hiếu | 2A202600854 | Kỹ sư dữ liệu, xây dựng Ma trận từ khóa dị ứng và logic Tagging |
+| Trần Minh Quang | 2A202600924 | Tích hợp API LLM, xử lý Backend và quản lý LocalStorage |
 
 ## Luồng chức năng chính (Flow Demo)
 
