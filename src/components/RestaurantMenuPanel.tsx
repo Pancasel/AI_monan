@@ -2,11 +2,15 @@ import { tagMenu, buildConfirmQuestion } from "../lib/allergy";
 import { saveConfirmation } from "../lib/storage";
 import type { Restaurant, UserProfile } from "../types";
 import { ImgWithFallback } from "./ImgWithFallback";
+import { RestaurantDirectionsFooter } from "./RestaurantDirectionsFooter";
 
 interface RestaurantMenuPanelProps {
   restaurant: Restaurant;
   profile: UserProfile;
+  userLocation: [number, number] | null;
   travelLabel?: string | null;
+  routeLoading: boolean;
+  onShowRouteOnMap: () => void;
   onClose: () => void;
   onMenuUpdated: () => void;
 }
@@ -14,7 +18,10 @@ interface RestaurantMenuPanelProps {
 export function RestaurantMenuPanel({
   restaurant,
   profile,
+  userLocation,
   travelLabel,
+  routeLoading,
+  onShowRouteOnMap,
   onClose,
   onMenuUpdated,
 }: RestaurantMenuPanelProps) {
@@ -45,7 +52,6 @@ export function RestaurantMenuPanel({
         <h2>{restaurant.name}</h2>
         <p className="menu-panel-meta">
           {restaurant.district} · ★ {restaurant.rating}
-          {travelLabel && <span className="menu-panel-travel"> · 🚗 {travelLabel}</span>}
           {(profile.allergies.length > 0 || profile.customAllergyNotes?.trim()) && (
             <span className="menu-panel-score"> · {scorePct}% món phù hợp</span>
           )}
@@ -122,6 +128,14 @@ export function RestaurantMenuPanel({
           </article>
         ))}
       </div>
+
+      <RestaurantDirectionsFooter
+        restaurant={restaurant}
+        userLocation={userLocation}
+        travelLabel={travelLabel}
+        routeLoading={routeLoading}
+        onShowRouteOnMap={onShowRouteOnMap}
+      />
     </aside>
   );
 }

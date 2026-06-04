@@ -6,6 +6,11 @@ import type { UserProfile } from "../types";
 interface ChatPanelProps {
   profile: UserProfile;
   userLocation?: [number, number] | null;
+  messages: ChatMessage[];
+  setMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>;
+  input: string;
+  setInput: React.Dispatch<React.SetStateAction<string>>;
+  onPersist: () => void;
   onFocusRestaurant?: (id: string) => void;
   onLogout?: () => void;
   onEditProfile?: () => void;
@@ -14,40 +19,21 @@ interface ChatPanelProps {
 export function ChatPanel({
   profile,
   userLocation,
+  messages,
+  setMessages,
+  input,
+  setInput,
+  onPersist,
   onFocusRestaurant,
   onLogout,
   onEditProfile,
 }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>(() => [
-    {
-      id: "welcome",
-      role: "assistant",
-      content: generateAiReply("xin chào", profile),
-      html: true,
-    },
-  ]);
-  const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const profileKey = [
-    profile.allergies.join(","),
-    profile.customAllergyNotes ?? "",
-  ].join("|");
 
   const userCoords = userLocation
     ? { lat: userLocation[0], lng: userLocation[1] }
     : undefined;
-
-  useEffect(() => {
-    setMessages([
-      {
-        id: "welcome",
-        role: "assistant",
-        content: generateAiReply("xin chào", profile),
-        html: true,
-      },
-    ]);
-  }, [profileKey, profile.name]);
 
   const send = useCallback(
     async (text: string) => {
@@ -60,11 +46,12 @@ export function ChatPanel({
         content: trimmed,
       };
 
-      setMessages((m) => [...m, userMsg]);
+      const nextMessages = [...messages, userMsg];
+      setMessages(nextMessages);
       setInput("");
       setLoading(true);
 
-      const history = [...messages, userMsg];
+      const history = nextMessages;
       let reply = await fetchAiReply(history, profile);
       if (!reply) {
         reply = generateAiReply(trimmed, profile);
@@ -76,11 +63,15 @@ export function ChatPanel({
         content: reply,
         html: true,
       };
-      setMessages((m) => [...m, assistantMsg]);
+      setMessages([...nextMessages, assistantMsg]);
       setLoading(false);
     },
-    [loading, messages, profile]
+    [loading, messages, profile, setMessages, setInput]
   );
+
+  useEffect(() => {
+    if (!loading) onPersist();
+  }, [messages, loading, onPersist]);
 
   const handleChatClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = (e.target as HTMLElement).closest("[data-restaurant-id]");

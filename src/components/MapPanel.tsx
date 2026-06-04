@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Restaurant } from "../types";
 import { DEFAULT_LOCATION } from "../hooks/useUserLocation";
-import { useTravelTime } from "../hooks/useTravelTime";
-import { googleMapsDirectionsUrl, markerColor } from "../lib/restaurantUi";
+import { markerColor } from "../lib/restaurantUi";
 
 function createPinIcon(isSelected: boolean) {
   const color = markerColor(undefined, isSelected);
@@ -67,79 +66,23 @@ interface MapPanelProps {
   selectedId: string | null;
   onSelect: (id: string) => void;
   userLocation: [number, number] | null;
+  routeCoords: [number, number][];
+  showDirections: boolean;
 }
 
-export function MapPanel({ restaurants, selectedId, onSelect, userLocation }: MapPanelProps) {
-  const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
-  const [routeLoading, setRouteLoading] = useState(false);
-  const [showDirections, setShowDirections] = useState(false);
-
+export function MapPanel({
+  restaurants,
+  selectedId,
+  onSelect,
+  userLocation,
+  routeCoords,
+  showDirections,
+}: MapPanelProps) {
   const selected = restaurants.find((r) => r.id === selectedId);
-  const { label: travelLabel } = useTravelTime(userLocation, selected);
-
-  const fetchRoute = useCallback(async () => {
-    if (!selected || !userLocation) return;
-    setRouteLoading(true);
-    try {
-      const [uLat, uLng] = userLocation;
-      const url = `https://router.project-osrm.org/route/v1/driving/${uLng},${uLat};${selected.lng},${selected.lat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      const data = (await res.json()) as {
-        routes?: { geometry?: { coordinates?: [number, number][] } }[];
-      };
-      const coords = data.routes?.[0]?.geometry?.coordinates;
-      if (coords) {
-        setRouteCoords(coords.map(([lng, lat]) => [lat, lng] as [number, number]));
-        setShowDirections(true);
-      }
-    } catch {
-      setRouteCoords([]);
-    } finally {
-      setRouteLoading(false);
-    }
-  }, [selected, userLocation]);
-
-  useEffect(() => {
-    setRouteCoords([]);
-    setShowDirections(false);
-  }, [selectedId]);
-
   const mapCenter = userLocation ?? DEFAULT_LOCATION;
 
   return (
     <div className="map-panel">
-      {selected && (
-        <div className="map-directions-bar">
-          {travelLabel && (
-            <span className="map-travel-time" title="Thời gian đi từ vị trí của bạn">
-              🚗 {travelLabel}
-            </span>
-          )}
-          <button
-            type="button"
-            className="map-dir-btn"
-            disabled={routeLoading || !userLocation}
-            onClick={fetchRoute}
-          >
-            {routeLoading ? "Đang tính…" : "🗺 Chỉ đường trên bản đồ"}
-          </button>
-          <a
-            className="map-dir-btn map-dir-link"
-            href={googleMapsDirectionsUrl(
-              selected.lat,
-              selected.lng,
-              selected.name,
-              userLocation?.[0],
-              userLocation?.[1]
-            )}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Mở Google Maps
-          </a>
-        </div>
-      )}
-
       <div className="map-wrap">
         <MapContainer
           center={mapCenter}

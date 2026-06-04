@@ -385,6 +385,14 @@ a {
   box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
 }
 
+.preview-shell.preview-phone .foodmap-layout.restaurant-open .panel-chat {
+  display: none;
+}
+
+.preview-shell.preview-phone .foodmap-layout.restaurant-open .panel-map-area {
+  flex: 1;
+}
+
 /* FoodMap: chat trái, bản đồ + menu phải */
 .foodmap-app {
   height: 100%;
@@ -669,15 +677,37 @@ a {
 }
 
 .map-directions-bar {
-  position: absolute;
-  bottom: 20px;
-  left: 16px;
-  right: 16px;
-  z-index: 1000;
+  display: none;
+}
+
+.dir-btn {
+  flex: 1;
+  padding: 12px 14px;
+  border: none;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: #4285F4;
+  text-align: center;
+  text-decoration: none;
+}
+
+.dir-btn:hover:not(:disabled) {
+  background: #e8f0fe;
+}
+
+.dir-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.dir-link {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
 }
 
 .map-dir-btn {
@@ -850,6 +880,37 @@ a {
   font-size: 0.8rem;
   color: var(--muted);
   margin-top: 4px;
+}
+
+.menu-directions-footer {
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.menu-dir-travel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.menu-dir-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.menu-dir-actions .dir-btn {
+  background: var(--surface2);
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+
+.menu-dir-actions .dir-btn:hover:not(:disabled) {
+  background: #e8f0fe;
+  border-color: #c5d9fc;
 }
 
 .menu-panel-footer {
@@ -1327,6 +1388,12 @@ a {
 @media (max-width: 768px) {
   .foodmap-layout {
     flex-direction: column;
+  }
+  .foodmap-layout.restaurant-open .panel-chat {
+    display: none;
+  }
+  .foodmap-layout.restaurant-open .panel-map-area {
+    flex: 1;
   }
   .panel-map-area {
     order: 1;

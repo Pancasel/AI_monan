@@ -14,6 +14,19 @@ const OPENROUTER_BASE_URL =
 const OPENROUTER_MODEL =
   process.env.OPENROUTER_MODEL ?? "deepseek/deepseek-chat";
 
+interface StoredSession {
+  messages: { id: string; role: string; content: string; html?: boolean }[];
+  selectedId: string | null;
+  inputDraft: string;
+  updatedAt: number;
+}
+
+const sessions = new Map<string, StoredSession>();
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 app.use(cors({ origin: true }));
 app.use(express.json({ limit: "1mb" }));
 
@@ -115,6 +128,38 @@ app.get("/api/restaurants/:id", (req, res) => {
     return;
   }
   res.json(r);
+});
+
+app.get("/api/session/:email", (req, res) => {
+  const key = normalizeEmail(req.params.email);
+  const session = sessions.get(key) ?? null;
+  res.json({ session });
+});
+
+app.put("/api/session/:email", (req, res) => {
+  const key = normalizeEmail(req.params.email);
+  const body = req.body as StoredSession;
+  if (!body || !Array.isArray(body.messages)) {
+    res.status(400).json({ error: "Invalid session payload" });
+    return;
+  }
+  const existing = sessions.get(key);
+  const incomingAt = body.updatedAt ?? Date.now();
+  if (existing && incomingAt < existing.updatedAt) {
+    res.json({ session: existing });
+    return;
+  }
+  const session: StoredSession = {
+    messages: body.messages.length ? body.messages : (existing?.messages ?? []),
+    selectedId: body.selectedId !== undefined ? body.selectedId : (existing?.selectedId ?? null),
+    inputDraft:
+      typeof body.inputDraft === "string"
+        ? body.inputDraft
+        : (existing?.inputDraft ?? ""),
+    updatedAt: incomingAt,
+  };
+  sessions.set(key, session);
+  res.json({ session });
 });
 
 app.post("/api/chat", async (req, res) => {
