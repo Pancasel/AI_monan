@@ -1,18 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   generateAiReply,
   formatChatHtml,
+  getDynamicSuggestions,
   type ChatMessage,
 } from "../lib/aiChat";
 import { fetchAiReply } from "../lib/chatApi";
 import type { UserProfile } from "../types";
-
-const SUGGESTIONS = [
-  "Nhà hàng Hà Nội phù hợp với tui",
-  "Cơm gà có nguyên liệu gì?",
-  "Gợi ý quán chay",
-  "Top rating",
-];
 
 interface ChatPanelProps {
   profile: UserProfile;
@@ -20,6 +14,7 @@ interface ChatPanelProps {
   externalPrompt?: string | null;
   onExternalPromptConsumed?: () => void;
   onLogout?: () => void;
+  onEditProfile?: () => void;
 }
 
 export function ChatPanel({
@@ -28,8 +23,11 @@ export function ChatPanel({
   externalPrompt,
   onExternalPromptConsumed,
   onLogout,
+  onEditProfile,
 }: ChatPanelProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([
+  const suggestions = useMemo(() => getDynamicSuggestions(profile), [profile]);
+
+  const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: "welcome",
       role: "assistant",
@@ -40,6 +38,18 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const profileKey = profile.allergies.join(",");
+
+  useEffect(() => {
+    setMessages([
+      {
+        id: "welcome",
+        role: "assistant",
+        content: generateAiReply("xin chào", profile),
+        html: true,
+      },
+    ]);
+  }, [profileKey, profile.name]);
 
   const send = useCallback(
     async (text: string) => {
@@ -102,22 +112,35 @@ export function ChatPanel({
           </span>
           <div>
             <h1>FoodMap Assistant</h1>
-            <p>Tìm quán phù hợp · Hà Nội</p>
+            {profile.allergies.length > 0 && (
+              <p className="chat-allergy-badge">
+                Dị ứng: {profile.allergies.length} loại
+              </p>
+            )}
           </div>
         </div>
-        {onLogout && (
-          <button type="button" className="chat-logout" onClick={onLogout} title="Đăng xuất">
-            ↪
-          </button>
-        )}
+        <div className="chat-header-actions">
+          {onEditProfile && (
+            <button
+              type="button"
+              className="chat-settings"
+              onClick={onEditProfile}
+              title="Sửa hồ sơ dị ứng"
+            >
+              ⚙
+            </button>
+          )}
+          {onLogout && (
+            <button type="button" className="chat-logout" onClick={onLogout} title="Đăng xuất">
+              ↪
+            </button>
+          )}
+        </div>
       </header>
 
       <div className="chat-messages" onClick={handleChatClick}>
         {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={`chat-row ${msg.role}`}
-          >
+          <div key={msg.id} className={`chat-row ${msg.role}`}>
             {msg.role === "assistant" && (
               <span className="chat-avatar bot" aria-hidden>
                 🤖
@@ -148,7 +171,7 @@ export function ChatPanel({
       </div>
 
       <div className="chat-suggestions">
-        {SUGGESTIONS.map((s) => (
+        {suggestions.map((s) => (
           <button
             key={s}
             type="button"

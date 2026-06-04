@@ -132,6 +132,12 @@ export function rankRestaurants(
 
 export function buildConfirmQuestion(dish: Dish, profile: UserProfile): string {
   const text = dishText(dish);
+  const name = normalize(dish.name);
+
+  if (name.includes("cá") && profile.allergies.includes("ca")) {
+    return `Món "${dish.name}" dùng loại cá gì? (cá thu, basa, hồi…). Nhờ quán xác nhận trước khi gọi.`;
+  }
+
   const related = profile.allergies
     .map((id) => ALLERGEN_OPTIONS.find((a) => a.id === id))
     .filter((opt): opt is (typeof ALLERGEN_OPTIONS)[number] =>
@@ -140,12 +146,12 @@ export function buildConfirmQuestion(dish: Dish, profile: UserProfile): string {
 
   if (related.length === 1) {
     const label = related[0].label.toLowerCase();
-    return `Món "${dish.name}" có ${label} không? Cần nhà hàng xác nhận lại thành phần.`;
+    return `Món "${dish.name}" có chứa ${label} không? Nhờ quán xác nhận thành phần.`;
   }
 
   const labels = profile.allergies
     .map((id) => ALLERGEN_OPTIONS.find((a) => a.id === id)?.label)
     .filter(Boolean)
     .join(", ");
-  return `Món "${dish.name}" có chứa ${labels} không? Vui lòng xác nhận thành phần.`;
+  return `Món "${dish.name}" có chứa ${labels} không? Vui lòng xác nhận thành phần với quán.`;
 }

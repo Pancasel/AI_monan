@@ -1,5 +1,7 @@
 import type { Dish, Restaurant } from "../types";
 import { DISH_CATALOG, type DishTemplate } from "./dishCatalog";
+import { EXTRA_RESTAURANT_TEMPLATES } from "./extraRestaurants";
+import { getDishImage, getRestaurantImage } from "../lib/restaurantUi";
 
 const RESTAURANT_TEMPLATES: {
   name: string;
@@ -39,6 +41,7 @@ const RESTAURANT_TEMPLATES: {
   { name: "Lẩu Mắm Miền Tây", cuisine: "Lẩu", district: "Đống Đa", address: "77 Chùa Bộc", catalogKey: "lau", rating: 4.4 },
   { name: "Tôm Hùm Alaska", cuisine: "Hải sản", district: "Tây Hồ", address: "200 Quảng An", catalogKey: "haiSan", rating: 4.8 },
   { name: "Bánh Mì & Cà Phê Sáng", cuisine: "Bánh mì", district: "Cầu Giấy", address: "9 Nguyễn Phong Sắc", catalogKey: "banhmi", rating: 4.3 },
+  ...EXTRA_RESTAURANT_TEMPLATES,
 ];
 
 /** Tâm quận Hà Nội — marker rải theo khu vực thật trên bản đồ */
@@ -53,7 +56,11 @@ const DISTRICT_CENTERS: Record<string, { lat: number; lng: number }> = {
 
 const FALLBACK_CENTER = { lat: 21.0285, lng: 105.8542 };
 
-function buildMenu(restaurantId: string, catalogKey: keyof typeof DISH_CATALOG): Dish[] {
+function buildMenu(
+  restaurantId: string,
+  catalogKey: keyof typeof DISH_CATALOG,
+  cuisine: string
+): Dish[] {
   const templates = DISH_CATALOG[catalogKey];
   return templates.map((t: DishTemplate, i) => ({
     id: `${restaurantId}-d${i + 1}`,
@@ -62,6 +69,7 @@ function buildMenu(restaurantId: string, catalogKey: keyof typeof DISH_CATALOG):
     description: t.description,
     ingredients: [...t.ingredients],
     ambiguous: t.ambiguous,
+    image: getDishImage(t.name, cuisine),
   }));
 }
 
@@ -89,7 +97,8 @@ export const RESTAURANTS: Restaurant[] = RESTAURANT_TEMPLATES.map((t, i) => {
     lat,
     lng,
     rating: t.rating,
-    menu: buildMenu(id, t.catalogKey),
+    image: getRestaurantImage(t.cuisine, id),
+    menu: buildMenu(id, t.catalogKey, t.cuisine),
   };
 });
 

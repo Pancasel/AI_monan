@@ -27,6 +27,7 @@ export interface Dish {
   price: number;
   description: string;
   ingredients: string[];
+  image?: string;
   /** Tên mơ hồ — cần nhà hàng xác nhận (nhãn vàng) */
   ambiguous?: boolean;
   /** Nhà hàng đã xác nhận thành phần (cho món vàng) */
@@ -53,6 +54,7 @@ export interface Restaurant {
   lat: number;
   lng: number;
   rating: number;
+  image: string;
   menu: Dish[];
 }
 

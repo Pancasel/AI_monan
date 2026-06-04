@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, CircleMarker, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Restaurant } from "../types";
+import { googleMapsDirectionsUrl, markerColor } from "../lib/restaurantUi";
 
-const USER_LOCATION: [number, number] = [21.0285, 105.8542];
+const DEFAULT_LOCATION: [number, number] = [21.0285, 105.8542];
 
-function createPinIcon(isSelected: boolean) {
+function createPinIcon(isSelected: boolean, rating: number) {
+  const color = markerColor(rating, isSelected);
   return L.divIcon({
     className: "map-pin-wrap",
-    html: `<button type="button" class="map-pin ${isSelected ? "selected" : ""}" aria-label="Chọn quán"></button>`,
+    html: `<button type="button" class="map-pin ${isSelected ? "selected" : ""}" style="background:${color}" aria-label="Chọn quán"></button>`,
     iconSize: [22, 22],
     iconAnchor: [11, 11],
   });
@@ -43,7 +45,7 @@ function RestaurantMarker({
     <Marker
       ref={markerRef}
       position={[restaurant.lat, restaurant.lng]}
-      icon={createPinIcon(isSelected)}
+      icon={createPinIcon(isSelected, restaurant.rating)}
       zIndexOffset={isSelected ? 2000 : 0}
       eventHandlers={{
         click: () => onSelect(restaurant.id),
@@ -60,6 +62,11 @@ interface MapPanelProps {
 
 export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
   const [search, setSearch] = useState("");
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
+  const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
+  const [routeLoading, setRouteLoading] = useState(false);
+  const [showDirections, setShowDirections] = useState(false);
+
   const selected = restaurants.find((r) => r.id === selectedId);
 
   const visible = useMemo(() => {
@@ -73,6 +80,44 @@ export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
     );
   }, [restaurants, search]);
 
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
+      () => setUserLocation(DEFAULT_LOCATION),
+      { enableHighAccuracy: true, timeout: 8000 }
+    );
+  }, []);
+
+  const fetchRoute = useCallback(async () => {
+    if (!selected || !userLocation) return;
+    setRouteLoading(true);
+    try {
+      const [uLat, uLng] = userLocation;
+      const url = `https://router.project-osrm.org/route/v1/driving/${uLng},${uLat};${selected.lng},${selected.lat}?overview=full&geometries=geojson`;
+      const res = await fetch(url);
+      const data = (await res.json()) as {
+        routes?: { geometry?: { coordinates?: [number, number][] } }[];
+      };
+      const coords = data.routes?.[0]?.geometry?.coordinates;
+      if (coords) {
+        setRouteCoords(coords.map(([lng, lat]) => [lat, lng] as [number, number]));
+        setShowDirections(true);
+      }
+    } catch {
+      setRouteCoords([]);
+    } finally {
+      setRouteLoading(false);
+    }
+  }, [selected, userLocation]);
+
+  useEffect(() => {
+    setRouteCoords([]);
+    setShowDirections(false);
+  }, [selectedId]);
+
+  const mapCenter = userLocation ?? DEFAULT_LOCATION;
+
   return (
     <div className="map-panel">
       <div className="map-toolbar">
@@ -83,26 +128,64 @@ export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
           placeholder="Tìm quán, khu vực..."
           className="map-search"
         />
-        <span className="map-count">{visible.length} quán trên bản đồ</span>
+        <span className="map-count">{visible.length} quán</span>
       </div>
+
+      {selected && (
+        <div className="map-directions-bar">
+          <button
+            type="button"
+            className="map-dir-btn"
+            disabled={routeLoading || !userLocation}
+            onClick={fetchRoute}
+          >
+            {routeLoading ? "Đang tính…" : "🗺 Chỉ đường trên bản đồ"}
+          </button>
+          <a
+            className="map-dir-btn map-dir-link"
+            href={googleMapsDirectionsUrl(
+              selected.lat,
+              selected.lng,
+              selected.name,
+              userLocation?.[0],
+              userLocation?.[1]
+            )}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Mở Google Maps
+          </a>
+        </div>
+      )}
 
       <div className="map-wrap">
         <MapContainer
-          center={USER_LOCATION}
+          center={mapCenter}
           zoom={13}
           style={{ height: "100%", width: "100%" }}
           scrollWheelZoom
           zoomControl={false}
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> · <a href="https://carto.com/">CARTO</a>'
-            url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+            attribution='&copy; Google-style via <a href="https://carto.com/">CARTO</a>'
+            url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
           <CircleMarker
-            center={USER_LOCATION}
-            radius={8}
-            pathOptions={{ color: "#3b82f6", fillColor: "#3b82f6", fillOpacity: 1, weight: 3 }}
+            center={mapCenter}
+            radius={9}
+            pathOptions={{
+              color: "#4285F4",
+              fillColor: "#4285F4",
+              fillOpacity: 1,
+              weight: 3,
+            }}
           />
+          {showDirections && routeCoords.length > 0 && (
+            <Polyline
+              positions={routeCoords}
+              pathOptions={{ color: "#4285F4", weight: 5, opacity: 0.85 }}
+            />
+          )}
           {selected && <FlyTo lat={selected.lat} lng={selected.lng} />}
           {visible.map((r) => (
             <RestaurantMarker

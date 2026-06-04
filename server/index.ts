@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { RESTAURANTS } from "../src/data/restaurants.js";
+import { RESTAURANTS, getRestaurantById } from "../src/data/restaurants.js";
 import { ALLERGEN_OPTIONS } from "../src/data/allergens.js";
 import { rankRestaurants } from "../src/lib/allergy.js";
 import type { UserProfile } from "../src/types/index.js";
@@ -29,38 +29,81 @@ function buildSystemPrompt(profile: UserProfile): string {
       const pct = Math.round(item.score * 100);
       const dishes = r.menu
         .slice(0, 4)
-        .map((d) => d.name)
-        .join(", ");
+        .map((d) => `${d.name} (${d.ingredients.join(", ")})`)
+        .join("; ");
       return `- id=${r.id} | ${r.name} | ${r.district} | ${r.cuisine} | ⭐${r.rating} | ${pct}% món phù hợp | món: ${dishes}`;
     })
     .join("\n");
 
   const catalog = RESTAURANTS.map(
     (r) =>
-      `- id=${r.id} | ${r.name} | ${r.address} | ${r.cuisine} | menu: ${r.menu.map((d) => d.name).join("; ")}`
+      `- id=${r.id} | ${r.name} | ${r.address} | ${r.cuisine} | menu: ${r.menu.map((d) => `${d.name}[${d.ingredients.join(",")}]`).join("; ")}`
   ).join("\n");
 
-  return `Bạn là trợ lý AI của app "AI Món Ăn" tại Hà Nội, chuyên gợi ý nhà hàng và tra cứu món ăn theo dị ứng.
+  return `Bạn là trợ lý AI của app "AI Món Ăn" tại Hà Nội — gợi ý nhà hàng và tra cứu món ăn theo dị ứng.
 
-Người dùng: ${profile.name || "bạn"}${profile.email ? ` (${profile.email})` : ""}.
-Dị ứng đã khai báo: ${allergyLabels.length ? allergyLabels.join(", ") : "chưa có"}.
+## Người dùng
+- Tên: ${profile.name || "bạn"}${profile.email ? ` (${profile.email})` : ""}
+- Dị ứng BẮT BUỘC ghi nhớ và áp dụng mọi câu trả lời: ${allergyLabels.length ? allergyLabels.join(", ") : "chưa khai báo — nhắc người dùng cập nhật hồ sơ"}
 
-Quy tắc BẮT BUỘC:
-1. Trả lời bằng tiếng Việt, ngắn gọn, thân thiện.
-2. Mỗi lần nhắc tên nhà hàng, PHẢI dùng link: [Tên quán](restaurant:ID) — app sẽ hiện thẻ quán có ảnh, rating, khoảng cách (vd: [Phở Thìn Lò Đúc](restaurant:r1)).
-3. Khi gợi ý nhiều quán, mỗi quán một dòng riêng với link restaurant:ID; có thể thêm emoji thân thiện.
-4. Giải thích món an toàn / đỏ / vàng theo dị ứng người dùng khi liên quan.
-5. Chỉ dùng thông tin nhà hàng và món trong dữ liệu dưới đây; không bịa quán mới.
+## Quy tắc trả lời
+1. Tiếng Việt, ngắn gọn, thân thiện, chính xác.
+2. Mỗi tên nhà hàng PHẢI dùng link: [Tên quán](restaurant:ID) — app hiện thẻ có ảnh, rating.
+3. CHỈ dùng dữ liệu từ API /api/restaurants bên dưới — KHÔNG bịa quán, món, nguyên liệu.
+4. Nếu không có dữ liệu món/nguyên liệu: trả lời "Mình chưa có thông tin chi tiết về món này trong hệ thống. Bạn thử hỏi tên món cụ thể hơn hoặc hỏi gợi ý quán phù hợp nhé." — KHÔNG đoán.
+5. Hỏi quán chay → CHỈ gợi ý quán có cuisine "Chay", KHÔNG gợi ý quán nhậu/bia.
+6. Hỏi bún → ưu tiên quán bún, KHÔNG trả phở trừ khi người dùng hỏi phở.
+7. Hỏi top rating → sắp xếp theo rating giảm dần.
+8. Luôn nhắc dị ứng người dùng khi gợi ý món: xanh=an toàn, đỏ=tránh, vàng=cần hỏi quán.
+9. Món tên mơ hồ (cá kho, hải sản theo ngày): khuyên hỏi quán loại cá/hải sản cụ thể.
+
+## Dữ liệu từ GET /api/restaurants (${RESTAURANTS.length} quán, mỗi quán ~20 món)
 
 Top quán phù hợp (điểm = món xanh / tổng món):
 ${topList}
 
-Toàn bộ ${RESTAURANTS.length} nhà hàng:
+Toàn bộ catalog:
 ${catalog}`;
 }
 
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, ai: Boolean(OPENROUTER_API_KEY) });
+  res.json({ ok: true, ai: Boolean(OPENROUTER_API_KEY), restaurants: RESTAURANTS.length });
+});
+
+app.get("/api/restaurants", (_req, res) => {
+  res.json({
+    count: RESTAURANTS.length,
+    restaurants: RESTAURANTS.map((r) => ({
+      id: r.id,
+      name: r.name,
+      address: r.address,
+      district: r.district,
+      cuisine: r.cuisine,
+      rating: r.rating,
+      lat: r.lat,
+      lng: r.lng,
+      image: r.image,
+      menuCount: r.menu.length,
+      menu: r.menu.map((d) => ({
+        id: d.id,
+        name: d.name,
+        price: d.price,
+        ingredients: d.ingredients,
+        description: d.description,
+        ambiguous: d.ambiguous,
+        image: d.image,
+      })),
+    })),
+  });
+});
+
+app.get("/api/restaurants/:id", (req, res) => {
+  const r = getRestaurantById(req.params.id);
+  if (!r) {
+    res.status(404).json({ error: "Không tìm thấy quán" });
+    return;
+  }
+  res.json(r);
 });
 
 app.post("/api/chat", async (req, res) => {
@@ -106,7 +149,7 @@ app.post("/api/chat", async (req, res) => {
       body: JSON.stringify({
         model: OPENROUTER_MODEL,
         messages: apiMessages,
-        temperature: 0.6,
+        temperature: 0.4,
         max_tokens: 1200,
       }),
     });
@@ -136,6 +179,6 @@ app.post("/api/chat", async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(
-    `API http://localhost:${PORT} | ${OPENROUTER_MODEL} @ ${OPENROUTER_BASE_URL} (${OPENROUTER_API_KEY ? "key ok" : "no key"})`
+    `API http://localhost:${PORT} | ${RESTAURANTS.length} quán | ${OPENROUTER_MODEL} (${OPENROUTER_API_KEY ? "key ok" : "no key"})`
   );
 });

@@ -33,10 +33,13 @@ export function RestaurantMenuPanel({
 
   return (
     <aside className="restaurant-menu-panel" aria-label={`Menu ${restaurant.name}`}>
-      <div className="menu-panel-header">
+      <div className="menu-panel-hero">
+        <img src={restaurant.image} alt={restaurant.name} loading="lazy" />
         <button type="button" className="menu-panel-close" onClick={onClose} aria-label="Đóng menu">
           ×
         </button>
+      </div>
+      <div className="menu-panel-header">
         <h2>{restaurant.name}</h2>
         <p className="menu-panel-meta">
           {restaurant.district} · ★ {restaurant.rating}

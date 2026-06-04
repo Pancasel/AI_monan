@@ -1,31 +1,81 @@
 import type { Dish } from "../types";
 
 const CUISINE_IMAGES: Record<string, string> = {
-  Phở: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=480&h=280&fit=crop",
-  "Phở gà": "https://images.unsplash.com/photo-1617094835757-69aa2710f309?w=480&h=280&fit=crop",
-  "Bún chả": "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=480&h=280&fit=crop",
-  Bún: "https://images.unsplash.com/photo-1555126634-0897a6d11ac0?w=480&h=280&fit=crop",
-  "Cơm tấm": "https://images.unsplash.com/photo-1603133884108-004b53c1b7f4?w=480&h=280&fit=crop",
-  Cơm: "https://images.unsplash.com/photo-1512058564366-43710a2f0a6e?w=480&h=280&fit=crop",
-  "Bánh mì": "https://images.unsplash.com/photo-1553909489-cd47eeb1c4a0?w=480&h=280&fit=crop",
-  Lẩu: "https://images.unsplash.com/photo-1563379091339-03246963d7c9?w=480&h=280&fit=crop",
-  "Hải sản": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=480&h=280&fit=crop",
-  Chay: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=480&h=280&fit=crop",
-  Huế: "https://images.unsplash.com/photo-1555126634-0897a6d11ac0?w=480&h=280&fit=crop",
-  Nhậu: "https://images.unsplash.com/photo-1544025162-d76694265947?w=480&h=280&fit=crop",
+  Phở: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=640&h=360&fit=crop",
+  "Phở gà": "https://images.unsplash.com/photo-1617094835757-69aa2710f309?w=640&h=360&fit=crop",
+  "Phở cuốn": "https://images.unsplash.com/photo-1585036896545-ad26feffbe95?w=640&h=360&fit=crop",
+  "Bún chả": "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=640&h=360&fit=crop",
+  Bún: "https://images.unsplash.com/photo-1555126634-0897a6d11ac0?w=640&h=360&fit=crop",
+  "Bún đậu": "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?w=640&h=360&fit=crop",
+  "Bún bò": "https://images.unsplash.com/photo-1569562211093-4edf0d275d45?w=640&h=360&fit=crop",
+  "Cơm tấm": "https://images.unsplash.com/photo-1603133884108-004b53c1b7f4?w=640&h=360&fit=crop",
+  Cơm: "https://images.unsplash.com/photo-1512058564366-43710a2f0a6e?w=640&h=360&fit=crop",
+  "Bánh mì": "https://images.unsplash.com/photo-1553909489-cd47eeb1c4a0?w=640&h=360&fit=crop",
+  Lẩu: "https://images.unsplash.com/photo-1563379091339-03246963d7c9?w=640&h=360&fit=crop",
+  "Hải sản": "https://images.unsplash.com/photo-1559339352-11d035aa65de?w=640&h=360&fit=crop",
+  "Ốc / hải sản": "https://images.unsplash.com/photo-1565680018434-b1cbd5c5d289?w=640&h=360&fit=crop",
+  Chay: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=640&h=360&fit=crop",
+  Huế: "https://images.unsplash.com/photo-1569562211093-4edf0d275d45?w=640&h=360&fit=crop",
+  Nhậu: "https://images.unsplash.com/photo-1544025162-d76694265947?w=640&h=360&fit=crop",
 };
 
 const DEFAULT_IMAGE =
-  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=480&h=280&fit=crop";
+  "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=640&h=360&fit=crop";
 
-export function getRestaurantImage(cuisine: string): string {
+const DISH_IMAGES: Record<string, string> = {
+  phở: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=400&h=280&fit=crop",
+  bún: "https://images.unsplash.com/photo-1555126634-0897a6d11ac0?w=400&h=280&fit=crop",
+  cơm: "https://images.unsplash.com/photo-1512058564366-43710a2f0a6e?w=400&h=280&fit=crop",
+  "bánh mì": "https://images.unsplash.com/photo-1553909489-cd47eeb1c4a0?w=400&h=280&fit=crop",
+  lẩu: "https://images.unsplash.com/photo-1563379091339-03246963d7c9?w=400&h=280&fit=crop",
+  cua: "https://images.unsplash.com/photo-1565680018434-b1cbd5c5d289?w=400&h=280&fit=crop",
+  tôm: "https://images.unsplash.com/photo-1565680018434-b1cbd5c5d289?w=400&h=280&fit=crop",
+  chay: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=280&fit=crop",
+  gà: "https://images.unsplash.com/photo-1598103442097-8b743aff334c?w=400&h=280&fit=crop",
+  cá: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=400&h=280&fit=crop",
+  nem: "https://images.unsplash.com/photo-1529003605850-f9162adedcaf?w=400&h=280&fit=crop",
+};
+
+/** Ảnh quán theo loại món — dùng cho thẻ chat và panel chi tiết */
+export function getRestaurantImage(cuisine: string, restaurantId?: string): string {
   for (const [key, url] of Object.entries(CUISINE_IMAGES)) {
     if (cuisine.includes(key) || key.includes(cuisine)) return url;
+  }
+  if (restaurantId) {
+    const idx = parseInt(restaurantId.replace(/\D/g, ""), 10) || 0;
+    const variants = Object.values(CUISINE_IMAGES);
+    return variants[idx % variants.length];
   }
   return DEFAULT_IMAGE;
 }
 
-export function estimateDistanceMeters(restaurantId: string): number {
+export function getDishImage(dishName: string, cuisine?: string): string {
+  const n = dishName.toLowerCase();
+  for (const [key, url] of Object.entries(DISH_IMAGES)) {
+    if (n.includes(key)) return url;
+  }
+  if (cuisine) return getRestaurantImage(cuisine);
+  return DEFAULT_IMAGE;
+}
+
+export function estimateDistanceMeters(
+  restaurantId: string,
+  userLat?: number,
+  userLng?: number,
+  restLat?: number,
+  restLng?: number
+): number {
+  if (userLat != null && userLng != null && restLat != null && restLng != null) {
+    const R = 6371000;
+    const dLat = ((restLat - userLat) * Math.PI) / 180;
+    const dLng = ((restLng - userLng) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos((userLat * Math.PI) / 180) *
+        Math.cos((restLat * Math.PI) / 180) *
+        Math.sin(dLng / 2) ** 2;
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+  }
   let hash = 0;
   for (let i = 0; i < restaurantId.length; i++) {
     hash = (hash * 31 + restaurantId.charCodeAt(i)) % 997;
@@ -68,6 +118,22 @@ export function cuisineEmoji(cuisine: string): string {
   return "🍽️";
 }
 
-export function markerColor(rating: number): string {
-  return rating >= 4.5 ? "#ea580c" : rating >= 4.2 ? "#f97316" : "#dc2626";
+/** Màu pin kiểu Google Maps */
+export function markerColor(rating: number, isSelected = false): string {
+  if (isSelected) return "#4285F4";
+  return rating >= 4.5 ? "#EA4335" : rating >= 4.2 ? "#FBBC04" : "#34A853";
+}
+
+export function googleMapsDirectionsUrl(
+  destLat: number,
+  destLng: number,
+  destName?: string,
+  originLat?: number,
+  originLng?: number
+): string {
+  const dest = `${destLat},${destLng}`;
+  const origin =
+    originLat != null && originLng != null ? `${originLat},${originLng}` : "My+Location";
+  const name = destName ? encodeURIComponent(destName) : "";
+  return `https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}${name ? `&destination_place_id=${name}` : ""}&travelmode=driving`;
 }

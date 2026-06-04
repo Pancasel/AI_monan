@@ -5,18 +5,21 @@ import type { UserProfile } from "../types";
 import { ChatPanel } from "./ChatPanel";
 import { MapPanel } from "./MapPanel";
 import { RestaurantMenuPanel } from "./RestaurantMenuPanel";
+import { ProfileSettings } from "./ProfileSettings";
 
 interface MainAppProps {
   profile: UserProfile;
   onLogout: () => void;
+  onProfileUpdate: (profile: UserProfile) => void;
 }
 
-export function MainApp({ profile, onLogout }: MainAppProps) {
+export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
   const [dataVersion, setDataVersion] = useState(0);
   const restaurants = useRestaurants(dataVersion);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [chatPrompt, setChatPrompt] = useState<string | null>(null);
   const [menuKey, setMenuKey] = useState(0);
+  const [showProfile, setShowProfile] = useState(false);
 
   const refreshRestaurants = useCallback(() => {
     setDataVersion((v) => v + 1);
@@ -36,6 +39,11 @@ export function MainApp({ profile, onLogout }: MainAppProps) {
     onLogout();
   };
 
+  const handleProfileSave = (updated: UserProfile) => {
+    onProfileUpdate(updated);
+    refreshRestaurants();
+  };
+
   return (
     <div className="foodmap-app">
       <div className="foodmap-layout">
@@ -46,6 +54,7 @@ export function MainApp({ profile, onLogout }: MainAppProps) {
             externalPrompt={chatPrompt}
             onExternalPromptConsumed={() => setChatPrompt(null)}
             onLogout={handleLogout}
+            onEditProfile={() => setShowProfile(true)}
           />
         </aside>
 
@@ -67,6 +76,14 @@ export function MainApp({ profile, onLogout }: MainAppProps) {
           )}
         </main>
       </div>
+
+      {showProfile && (
+        <ProfileSettings
+          profile={profile}
+          onSave={handleProfileSave}
+          onClose={() => setShowProfile(false)}
+        />
+      )}
     </div>
   );
 }

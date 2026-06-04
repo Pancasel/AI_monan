@@ -23,5 +23,5 @@ export default function App() {
     return <Onboarding onComplete={setProfile} />;
   }
 
-  return <MainApp profile={profile} onLogout={() => setProfile(null)} />;
+  return <MainApp profile={profile} onLogout={() => setProfile(null)} onProfileUpdate={setProfile} />;
 }
