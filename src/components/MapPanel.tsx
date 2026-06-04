@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { MapContainer, TileLayer, Marker, CircleMarker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import type { Restaurant } from "../types";
+import { DEFAULT_LOCATION } from "../hooks/useUserLocation";
+import { useTravelTime } from "../hooks/useTravelTime";
 import { googleMapsDirectionsUrl, markerColor } from "../lib/restaurantUi";
 
-const DEFAULT_LOCATION: [number, number] = [21.0285, 105.8542];
-
-function createPinIcon(isSelected: boolean, rating: number) {
-  const color = markerColor(rating, isSelected);
+function createPinIcon(isSelected: boolean) {
+  const color = markerColor(undefined, isSelected);
   return L.divIcon({
     className: "map-pin-wrap",
     html: `<button type="button" class="map-pin ${isSelected ? "selected" : ""}" style="background:${color}" aria-label="Chọn quán"></button>`,
@@ -21,6 +21,14 @@ function FlyTo({ lat, lng, zoom }: { lat: number; lng: number; zoom?: number }) 
   useEffect(() => {
     map.flyTo([lat, lng], zoom ?? 16, { duration: 0.75 });
   }, [lat, lng, zoom, map]);
+  return null;
+}
+
+function FlyToUser({ location, zoom = 15 }: { location: [number, number]; zoom?: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(location, zoom, { duration: 0.85 });
+  }, [location[0], location[1], zoom, map]);
   return null;
 }
 
@@ -45,7 +53,7 @@ function RestaurantMarker({
     <Marker
       ref={markerRef}
       position={[restaurant.lat, restaurant.lng]}
-      icon={createPinIcon(isSelected, restaurant.rating)}
+      icon={createPinIcon(isSelected)}
       zIndexOffset={isSelected ? 2000 : 0}
       eventHandlers={{
         click: () => onSelect(restaurant.id),
@@ -58,16 +66,17 @@ interface MapPanelProps {
   restaurants: Restaurant[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  userLocation: [number, number] | null;
 }
 
-export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
+export function MapPanel({ restaurants, selectedId, onSelect, userLocation }: MapPanelProps) {
   const [search, setSearch] = useState("");
-  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [routeCoords, setRouteCoords] = useState<[number, number][]>([]);
   const [routeLoading, setRouteLoading] = useState(false);
   const [showDirections, setShowDirections] = useState(false);
 
   const selected = restaurants.find((r) => r.id === selectedId);
+  const { label: travelLabel } = useTravelTime(userLocation, selected);
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -79,15 +88,6 @@ export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
         r.district.toLowerCase().includes(q)
     );
   }, [restaurants, search]);
-
-  useEffect(() => {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      (pos) => setUserLocation([pos.coords.latitude, pos.coords.longitude]),
-      () => setUserLocation(DEFAULT_LOCATION),
-      { enableHighAccuracy: true, timeout: 8000 }
-    );
-  }, []);
 
   const fetchRoute = useCallback(async () => {
     if (!selected || !userLocation) return;
@@ -128,11 +128,16 @@ export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
           placeholder="Tìm quán, khu vực..."
           className="map-search"
         />
-        <span className="map-count">{visible.length} quán</span>
+        <span className="map-count">{visible.length} quán gần bạn</span>
       </div>
 
       {selected && (
         <div className="map-directions-bar">
+          {travelLabel && (
+            <span className="map-travel-time" title="Thời gian đi từ vị trí của bạn">
+              🚗 {travelLabel}
+            </span>
+          )}
           <button
             type="button"
             className="map-dir-btn"
@@ -161,7 +166,7 @@ export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
       <div className="map-wrap">
         <MapContainer
           center={mapCenter}
-          zoom={13}
+          zoom={14}
           style={{ height: "100%", width: "100%" }}
           scrollWheelZoom
           zoomControl={false}
@@ -183,9 +188,10 @@ export function MapPanel({ restaurants, selectedId, onSelect }: MapPanelProps) {
           {showDirections && routeCoords.length > 0 && (
             <Polyline
               positions={routeCoords}
-              pathOptions={{ color: "#4285F4", weight: 5, opacity: 0.85 }}
+              pathOptions={{ color: "#7B1FA2", weight: 5, opacity: 0.85 }}
             />
           )}
+          {userLocation && !selectedId && <FlyToUser location={userLocation} />}
           {selected && <FlyTo lat={selected.lat} lng={selected.lng} />}
           {visible.map((r) => (
             <RestaurantMarker

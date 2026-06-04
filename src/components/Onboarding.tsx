@@ -13,6 +13,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [allergies, setAllergies] = useState<AllergenId[]>([]);
+  const [customAllergyNotes, setCustomAllergyNotes] = useState("");
 
   const toggleAllergy = (id: AllergenId) => {
     setAllergies((prev) =>
@@ -39,6 +40,7 @@ export function Onboarding({ onComplete }: OnboardingProps) {
       name: name.trim(),
       email: email.trim(),
       allergies,
+      customAllergyNotes: customAllergyNotes.trim() || undefined,
     };
     saveProfile(profile);
     onComplete(profile);
@@ -124,8 +126,17 @@ export function Onboarding({ onComplete }: OnboardingProps) {
                 </label>
               ))}
             </div>
+            <div className="form-group allergy-custom">
+              <label>Dị ứng khác (nhập tự do)</label>
+              <textarea
+                value={customAllergyNotes}
+                onChange={(e) => setCustomAllergyNotes(e.target.value)}
+                placeholder="VD: mè, hạt điều, nấm — cách nhau bằng dấu phẩy"
+                rows={3}
+              />
+            </div>
             <button type="submit" className="btn btn-primary">
-              Lưu hồ sơ & vào app
+              Lưu hồ sơ dị ứng
             </button>
             <button type="button" className="btn btn-ghost" onClick={() => setStep(1)}>
               Quay lại

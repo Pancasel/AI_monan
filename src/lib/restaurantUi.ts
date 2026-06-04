@@ -22,6 +22,18 @@ const CUISINE_IMAGES: Record<string, string> = {
 const DEFAULT_IMAGE =
   "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=640&h=360&fit=crop";
 
+/** SVG cục bộ — luôn tải được khi CDN ảnh lỗi */
+export const IMAGE_FALLBACK =
+  "data:image/svg+xml," +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect fill="#fed7aa" width="100%" height="100%"/><text x="50%" y="52%" dominant-baseline="middle" text-anchor="middle" font-size="72">🍜</text></svg>'
+  );
+
+export function imageFallbackAttr(fallback = IMAGE_FALLBACK): string {
+  const safe = fallback.replace(/'/g, "%27");
+  return `onerror="this.onerror=null;this.src='${safe}'"`;
+}
+
 const DISH_IMAGES: Record<string, string> = {
   phở: "https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=400&h=280&fit=crop",
   bún: "https://images.unsplash.com/photo-1555126634-0897a6d11ac0?w=400&h=280&fit=crop",
@@ -89,6 +101,17 @@ export function estimateDeliveryMinutes(distanceM: number): string {
   return `${min}-${max} phút`;
 }
 
+/** Thời gian đi từ vị trí hiện tại tới quán */
+export function formatTravelTime(distanceM: number, durationSec?: number): string {
+  const mins =
+    durationSec != null
+      ? Math.max(1, Math.round(durationSec / 60))
+      : Math.max(1, Math.round(distanceM / 350));
+  const dist =
+    distanceM >= 1000 ? `${(distanceM / 1000).toFixed(1)} km` : `${distanceM} m`;
+  return `${mins} phút · ${dist}`;
+}
+
 export function priceRange(menu: Dish[]): { min: number; max: number } {
   if (!menu.length) return { min: 0, max: 0 };
   const prices = menu.map((d) => d.price);
@@ -118,10 +141,10 @@ export function cuisineEmoji(cuisine: string): string {
   return "🍽️";
 }
 
-/** Màu pin kiểu Google Maps */
-export function markerColor(rating: number, isSelected = false): string {
-  if (isSelected) return "#4285F4";
-  return rating >= 4.5 ? "#EA4335" : rating >= 4.2 ? "#FBBC04" : "#34A853";
+/** Màu pin: đỏ mặc định, tím khi chọn */
+export function markerColor(_rating?: number, isSelected = false): string {
+  if (isSelected) return "#7B1FA2";
+  return "#E53935";
 }
 
 export function googleMapsDirectionsUrl(

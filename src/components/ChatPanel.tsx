@@ -1,15 +1,11 @@
-import { useState, useRef, useEffect, useCallback, useMemo } from "react";
-import {
-  generateAiReply,
-  formatChatHtml,
-  getDynamicSuggestions,
-  type ChatMessage,
-} from "../lib/aiChat";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { generateAiReply, formatChatHtml, type ChatMessage } from "../lib/aiChat";
 import { fetchAiReply } from "../lib/chatApi";
 import type { UserProfile } from "../types";
 
 interface ChatPanelProps {
   profile: UserProfile;
+  userLocation?: [number, number] | null;
   onFocusRestaurant?: (id: string) => void;
   externalPrompt?: string | null;
   onExternalPromptConsumed?: () => void;
@@ -19,14 +15,13 @@ interface ChatPanelProps {
 
 export function ChatPanel({
   profile,
+  userLocation,
   onFocusRestaurant,
   externalPrompt,
   onExternalPromptConsumed,
   onLogout,
   onEditProfile,
 }: ChatPanelProps) {
-  const suggestions = useMemo(() => getDynamicSuggestions(profile), [profile]);
-
   const [messages, setMessages] = useState<ChatMessage[]>(() => [
     {
       id: "welcome",
@@ -38,7 +33,14 @@ export function ChatPanel({
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
-  const profileKey = profile.allergies.join(",");
+  const profileKey = [
+    profile.allergies.join(","),
+    profile.customAllergyNotes ?? "",
+  ].join("|");
+
+  const userCoords = userLocation
+    ? { lat: userLocation[0], lng: userLocation[1] }
+    : undefined;
 
   useEffect(() => {
     setMessages([
@@ -112,24 +114,18 @@ export function ChatPanel({
           </span>
           <div>
             <h1>FoodMap Assistant</h1>
-            {profile.allergies.length > 0 && (
-              <p className="chat-allergy-badge">
-                Dị ứng: {profile.allergies.length} loại
-              </p>
+            {onEditProfile && (
+              <button
+                type="button"
+                className="chat-profile-link"
+                onClick={onEditProfile}
+              >
+                Hồ sơ dị ứng
+              </button>
             )}
           </div>
         </div>
         <div className="chat-header-actions">
-          {onEditProfile && (
-            <button
-              type="button"
-              className="chat-settings"
-              onClick={onEditProfile}
-              title="Sửa hồ sơ dị ứng"
-            >
-              ⚙
-            </button>
-          )}
           {onLogout && (
             <button type="button" className="chat-logout" onClick={onLogout} title="Đăng xuất">
               ↪
@@ -149,7 +145,11 @@ export function ChatPanel({
             <div
               className={`chat-bubble ${msg.role}`}
               {...(msg.html && msg.role === "assistant"
-                ? { dangerouslySetInnerHTML: { __html: formatChatHtml(msg.content) } }
+                ? {
+                    dangerouslySetInnerHTML: {
+                      __html: formatChatHtml(msg.content, userCoords),
+                    },
+                  }
                 : {})}
             >
               {!msg.html || msg.role === "user" ? msg.content : null}
@@ -168,20 +168,6 @@ export function ChatPanel({
           </div>
         )}
         <div ref={bottomRef} />
-      </div>
-
-      <div className="chat-suggestions">
-        {suggestions.map((s) => (
-          <button
-            key={s}
-            type="button"
-            className="suggest-pill"
-            disabled={loading}
-            onClick={() => send(s)}
-          >
-            {s}
-          </button>
-        ))}
       </div>
 
       <form

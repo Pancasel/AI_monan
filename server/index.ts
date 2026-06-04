@@ -18,9 +18,13 @@ app.use(cors({ origin: true }));
 app.use(express.json({ limit: "1mb" }));
 
 function buildSystemPrompt(profile: UserProfile): string {
-  const allergyLabels = profile.allergies
+  const presetLabels = profile.allergies
     .map((id) => ALLERGEN_OPTIONS.find((a) => a.id === id)?.label)
     .filter(Boolean);
+  const allergyLabels = [
+    ...presetLabels,
+    ...(profile.customAllergyNotes?.trim() ? [profile.customAllergyNotes.trim()] : []),
+  ];
 
   const ranked = rankRestaurants(RESTAURANTS, profile).slice(0, 12);
   const topList = ranked
@@ -50,7 +54,7 @@ function buildSystemPrompt(profile: UserProfile): string {
 1. Tiếng Việt, ngắn gọn, thân thiện, chính xác.
 2. Mỗi tên nhà hàng PHẢI dùng link: [Tên quán](restaurant:ID) — app hiện thẻ có ảnh, rating.
 3. CHỈ dùng dữ liệu từ API /api/restaurants bên dưới — KHÔNG bịa quán, món, nguyên liệu.
-4. Nếu không có dữ liệu món/nguyên liệu: trả lời "Mình chưa có thông tin chi tiết về món này trong hệ thống. Bạn thử hỏi tên món cụ thể hơn hoặc hỏi gợi ý quán phù hợp nhé." — KHÔNG đoán.
+4. Nếu không có dữ liệu món trong catalog: trả lời kiểu "Mình không tìm thấy [tên món] trong dữ liệu hiện có." — KHÔNG đoán, KHÔNG bịa nguyên liệu.
 5. Hỏi quán chay → CHỈ gợi ý quán có cuisine "Chay", KHÔNG gợi ý quán nhậu/bia.
 6. Hỏi bún → ưu tiên quán bún, KHÔNG trả phở trừ khi người dùng hỏi phở.
 7. Hỏi top rating → sắp xếp theo rating giảm dần.

@@ -19,6 +19,8 @@ export interface UserProfile {
   name: string;
   email: string;
   allergies: AllergenId[];
+  /** Dị ứng khác — nhập tự do, phân tách bằng dấu phẩy */
+  customAllergyNotes?: string;
 }
 
 export interface Dish {

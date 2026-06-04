@@ -21,6 +21,21 @@ function matchesKeyword(text: string, keyword: string): boolean {
   return text.includes(k);
 }
 
+function parseCustomAllergyKeywords(notes?: string): string[] {
+  if (!notes?.trim()) return [];
+  return notes
+    .split(/[,;|\n]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length >= 2);
+}
+
+export function detectCustomAllergensInDish(dish: Dish, notes?: string): string[] {
+  const keywords = parseCustomAllergyKeywords(notes);
+  if (!keywords.length) return [];
+  const text = dishText(dish);
+  return keywords.filter((kw) => matchesKeyword(text, kw));
+}
+
 export function detectAllergensInDish(
   dish: Dish,
   allergyIds: AllergenId[]
@@ -51,12 +66,14 @@ export function isAmbiguousDishName(dish: Dish): boolean {
 function needsRestaurantConfirm(dish: Dish, profile: UserProfile): boolean {
   if (dish.confirmed) return false;
   if (dish.ambiguous) return true;
-  if (profile.allergies.length === 0) return false;
+  if (!profile.allergies.length && !profile.customAllergyNotes?.trim()) return false;
   return isAmbiguousDishName(dish);
 }
 
 export function tagDish(dish: Dish, profile: UserProfile): TaggedDish {
-  if (profile.allergies.length === 0) {
+  const hasAllergyProfile =
+    profile.allergies.length > 0 || Boolean(profile.customAllergyNotes?.trim());
+  if (!hasAllergyProfile) {
     return { ...dish, tag: "green", tagReason: "Bạn chưa khai báo dị ứng — món hiển thị bình thường." };
   }
 
@@ -84,10 +101,12 @@ export function tagDish(dish: Dish, profile: UserProfile): TaggedDish {
   }
 
   const detected = detectAllergensInDish(dish, profile.allergies);
-  if (detected.length > 0) {
-    const labels = detected
+  const customHits = detectCustomAllergensInDish(dish, profile.customAllergyNotes);
+  if (detected.length > 0 || customHits.length > 0) {
+    const presetLabels = detected
       .map((id) => ALLERGEN_OPTIONS.find((a) => a.id === id)?.label)
-      .join(", ");
+      .filter(Boolean);
+    const labels = [...presetLabels, ...customHits].join(", ");
     return {
       ...dish,
       tag: "red",

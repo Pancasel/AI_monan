@@ -12,6 +12,9 @@ interface ProfileSettingsProps {
 export function ProfileSettings({ profile, onSave, onClose }: ProfileSettingsProps) {
   const [name, setName] = useState(profile.name);
   const [allergies, setAllergies] = useState<AllergenId[]>(profile.allergies);
+  const [customAllergyNotes, setCustomAllergyNotes] = useState(
+    profile.customAllergyNotes ?? ""
+  );
 
   const toggleAllergy = (id: AllergenId) => {
     setAllergies((prev) =>
@@ -25,6 +28,7 @@ export function ProfileSettings({ profile, onSave, onClose }: ProfileSettingsPro
       ...profile,
       name: name.trim() || profile.name,
       allergies,
+      customAllergyNotes: customAllergyNotes.trim() || undefined,
     };
     saveProfile(updated);
     onSave(updated);
@@ -35,7 +39,7 @@ export function ProfileSettings({ profile, onSave, onClose }: ProfileSettingsPro
     <div className="profile-overlay" onClick={onClose}>
       <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
         <div className="profile-modal-header">
-          <h2>Hồ sơ dị ứng</h2>
+          <h2>Sửa dị ứng</h2>
           <button type="button" className="profile-close" onClick={onClose} aria-label="Đóng">
             ×
           </button>
@@ -66,8 +70,18 @@ export function ProfileSettings({ profile, onSave, onClose }: ProfileSettingsPro
             ))}
           </div>
 
+          <div className="form-group allergy-custom">
+            <label>Dị ứng khác (nhập tự do)</label>
+            <textarea
+              value={customAllergyNotes}
+              onChange={(e) => setCustomAllergyNotes(e.target.value)}
+              placeholder="VD: mè, hạt điều, nấm — cách nhau bằng dấu phẩy"
+              rows={3}
+            />
+          </div>
+
           <button type="submit" className="btn btn-primary">
-            Lưu thay đổi
+            Lưu hồ sơ dị ứng
           </button>
         </form>
       </div>

@@ -4,7 +4,9 @@ import { rankRestaurants } from "./allergy";
 import {
   estimateDistanceMeters,
   formatPriceShort,
+  formatTravelTime,
   getRestaurantImage,
+  imageFallbackAttr,
   priceRange,
 } from "./restaurantUi";
 import type { Restaurant, UserProfile } from "../types";
@@ -27,8 +29,13 @@ export type QuestionKind =
   | "allergy"
   | "general";
 
-const NO_DATA_REPLY =
-  "Mình chưa có thông tin chi tiết về món này trong hệ thống. Bạn thử hỏi tên món cụ thể hơn (vd: \"Bún chả Hà Nội\", \"Phở bò tái\") hoặc hỏi \"Gợi ý quán phù hợp với tui\" nhé.";
+function dishNotFoundReply(query: string): string {
+  const cleaned = query
+    .replace(/nguyên liệu|thành phần|có gì|gồm|\?|món|cho tui|cho mình/gi, "")
+    .trim();
+  const name = cleaned.length >= 2 ? `**${cleaned}**` : "món này";
+  return `Mình không tìm thấy ${name} trong dữ liệu hiện có. Bạn thử hỏi tên món khác trong menu quán gần bạn, hoặc hỏi quán phù hợp với bạn nhé.`;
+}
 
 function normalize(text: string): string {
   return text.toLowerCase().normalize("NFC");
@@ -136,10 +143,13 @@ function findDishesAcrossRestaurants(dishKeyword: string, limit = 5) {
 }
 
 function allergyLabels(profile: UserProfile): string {
-  return profile.allergies
+  const preset = profile.allergies
     .map((id) => ALLERGEN_OPTIONS.find((a) => a.id === id)?.label)
-    .filter(Boolean)
-    .join(", ");
+    .filter(Boolean);
+  const custom = profile.customAllergyNotes?.trim();
+  const parts = [...preset];
+  if (custom) parts.push(custom);
+  return parts.join(", ");
 }
 
 export function classifyQuestion(text: string): QuestionKind {
@@ -220,7 +230,9 @@ function formatRestaurantList(
     return "Mình chưa tìm thấy quán phù hợp với yêu cầu này. Thử hỏi \"Gợi ý quán phù hợp với tui\" hoặc chọn loại món cụ thể nhé.";
   }
   const allergyNote =
-    profile.allergies.length > 0 ? ` (lọc theo dị ứng: ${allergyLabels(profile)})` : "";
+    profile.allergies.length > 0 || profile.customAllergyNotes?.trim()
+      ? ` (lọc theo dị ứng: ${allergyLabels(profile)})`
+      : "";
   const lines = ranked.slice(0, 8).map((item, i) => {
     const pct = Math.round(item.score * 100);
     const { restaurant: r } = item;
@@ -234,8 +246,8 @@ export function generateAiReply(userText: string, profile: UserProfile): string 
   const t = normalize(userText);
 
   if (kind === "allergy") {
-    if (profile.allergies.length === 0) {
-      return "Bạn chưa khai báo dị ứng nào. Bấm ⚙️ ở góc chat để cập nhật hồ sơ dị ứng nhé.";
+    if (profile.allergies.length === 0 && !profile.customAllergyNotes?.trim()) {
+      return "Bạn chưa khai báo dị ứng nào. Bấm **Hồ sơ dị ứng** ở đầu chat để cập nhật nhé.";
     }
     const labels = allergyLabels(profile);
     const ranked = rankRestaurants(RESTAURANTS, profile);
@@ -302,7 +314,7 @@ export function generateAiReply(userText: string, profile: UserProfile): string 
         );
         return `Mình tìm thấy các món liên quan:\n\n${lines.join("\n")}`;
       }
-      return NO_DATA_REPLY;
+      return dishNotFoundReply(userText);
     }
     const { dish, restaurant } = found;
     return `**${dish.name}** tại [${restaurant.name}](restaurant:${restaurant.id}):\n\nNguyên liệu: ${dish.ingredients.join(", ")}.\n\n${dish.description}`;
@@ -320,62 +332,53 @@ export function generateAiReply(userText: string, profile: UserProfile): string 
       const ranked = rankRestaurants(filtered, profile);
       return formatRestaurantList(ranked, profile, "Quán có món bạn hỏi");
     }
-    return NO_DATA_REPLY;
+    return dishNotFoundReply(userText);
   }
 
   const name = profile.name ? ` ${profile.name}` : "";
   const allergyInfo =
-    profile.allergies.length > 0
+    profile.allergies.length > 0 || profile.customAllergyNotes?.trim()
       ? `\n\nMình nhớ bạn dị ứng: **${allergyLabels(profile)}**.`
       : "";
-  return `Xin chào${name}! Mình có thể gợi ý quán theo dị ứng, tra nguyên liệu món, hoặc tìm quán chay / top rating.${allergyInfo}\n\nThử hỏi: "Gợi ý quán bún phù hợp", "Cơm gà có nguyên liệu gì?", hoặc "Top rating".`;
+  return `Xin chào${name}! Mình có thể gợi ý quán theo dị ứng, tra nguyên liệu món, hoặc tìm quán chay / top rating.${allergyInfo}\n\nHỏi trực tiếp tên món hoặc loại quán bạn muốn nhé.`;
 }
 
-/** Gợi ý động theo hồ sơ — chỉ hiện câu hỏi thực sự hữu ích */
-export function getDynamicSuggestions(profile: UserProfile): string[] {
-  const suggestions: string[] = [];
-
-  if (profile.allergies.length > 0) {
-    const first = ALLERGEN_OPTIONS.find((a) => a.id === profile.allergies[0])?.label;
-    suggestions.push(`Quán phù hợp (dị ứng ${first}${profile.allergies.length > 1 ? "…" : ""})`);
-  } else {
-    suggestions.push("Gợi ý quán phù hợp với tui");
-  }
-
-  suggestions.push("Gợi ý quán chay");
-  suggestions.push("Top rating cao nhất");
-
-  if (!profile.allergies.includes("ca")) {
-    suggestions.push("Cơm gà có nguyên liệu gì?");
-  } else {
-    suggestions.push("Món nào không có cá?");
-  }
-
-  return suggestions.slice(0, 4);
-}
-
-function restaurantCardHtml(id: string, label: string): string {
+function restaurantCardHtml(
+  id: string,
+  label: string,
+  userCoords?: { lat: number; lng: number }
+): string {
   const r = getRestaurantById(id);
   if (!r) {
     return `<a href="#" class="restaurant-link" data-restaurant-id="${id}">${label}</a>`;
   }
-  const dist = estimateDistanceMeters(r.id);
+  const dist = estimateDistanceMeters(
+    r.id,
+    userCoords?.lat,
+    userCoords?.lng,
+    r.lat,
+    r.lng
+  );
+  const travel = formatTravelTime(dist);
   const { min, max } = priceRange(r.menu);
   const img = r.image || getRestaurantImage(r.cuisine, r.id);
   return `<button type="button" class="chat-restaurant-card" data-restaurant-id="${id}">
-    <img src="${img}" alt="" loading="lazy" />
+    <img src="${img}" alt="" loading="lazy" ${imageFallbackAttr()} />
     <span class="chat-card-body">
       <span class="chat-card-name">${r.name}</span>
-      <span class="chat-card-meta">★ ${r.rating} · ${dist}m · ${formatPriceShort(min)} – ${formatPriceShort(max)}</span>
+      <span class="chat-card-meta">★ ${r.rating} · ${travel} · ${formatPriceShort(min)} – ${formatPriceShort(max)}</span>
     </span>
   </button>`;
 }
 
-export function formatChatHtml(text: string): string {
+export function formatChatHtml(
+  text: string,
+  userCoords?: { lat: number; lng: number }
+): string {
   return text
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/\[([^\]]+)\]\(restaurant:([^)]+)\)/g, (_, label, id) =>
-      restaurantCardHtml(id, label)
+      restaurantCardHtml(id, label, userCoords)
     )
     .replace(/\n\n/g, "</p><p>")
     .replace(/\n/g, "<br/>");

@@ -1,5 +1,7 @@
 import { useState, useCallback } from "react";
 import { useRestaurants } from "../hooks/useRestaurants";
+import { useUserLocation } from "../hooks/useUserLocation";
+import { useTravelTime } from "../hooks/useTravelTime";
 import { clearAuth } from "../lib/storage";
 import type { UserProfile } from "../types";
 import { ChatPanel } from "./ChatPanel";
@@ -15,7 +17,8 @@ interface MainAppProps {
 
 export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
   const [dataVersion, setDataVersion] = useState(0);
-  const restaurants = useRestaurants(dataVersion);
+  const userLocation = useUserLocation();
+  const restaurants = useRestaurants(dataVersion, userLocation);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [chatPrompt, setChatPrompt] = useState<string | null>(null);
   const [menuKey, setMenuKey] = useState(0);
@@ -29,6 +32,8 @@ export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
   const selectedRestaurant = selectedId
     ? restaurants.find((r) => r.id === selectedId)
     : null;
+
+  const { label: travelLabel } = useTravelTime(userLocation, selectedRestaurant);
 
   const handleSelectRestaurant = (id: string) => {
     setSelectedId(id);
@@ -50,6 +55,7 @@ export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
         <aside className="panel-chat" aria-label="FoodMap Assistant">
           <ChatPanel
             profile={profile}
+            userLocation={userLocation}
             onFocusRestaurant={handleSelectRestaurant}
             externalPrompt={chatPrompt}
             onExternalPromptConsumed={() => setChatPrompt(null)}
@@ -63,12 +69,14 @@ export function MainApp({ profile, onLogout, onProfileUpdate }: MainAppProps) {
             restaurants={restaurants}
             selectedId={selectedId}
             onSelect={handleSelectRestaurant}
+            userLocation={userLocation}
           />
           {selectedRestaurant && (
             <RestaurantMenuPanel
               key={`${selectedRestaurant.id}-${menuKey}`}
               restaurant={selectedRestaurant}
               profile={profile}
+              travelLabel={travelLabel}
               onClose={() => setSelectedId(null)}
               onAskAi={(q) => setChatPrompt(q)}
               onMenuUpdated={refreshRestaurants}
