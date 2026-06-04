@@ -32,15 +32,29 @@ AI Món Ăn là ứng dụng Web App thông minh tích hợp AI hỗ trợ ngư�
 
 ## Hướng dẫn chạy Prototype (Local)
 
-**Yêu cầu hệ thống:** Node.js (phiên bản 18 trở lên).
+**Yêu cầu hệ thống:** 
+- Node.js (phiên bản 18 trở lên).
+- Mã API của OpenRouter để chạy tính năng AI Chat.
 
-1. Clone repo này về máy.
+1. Clone repo này về máy và mở thư mục dự án:
+   ```bash
+   git clone https://github.com/Pancasel/AI_monan.git
+   cd AI_monan
+   ```
+
 2. Cài đặt các thư viện phụ thuộc:
    ```bash
    npm install
    ```
-3. Khởi động môi trường dev:
+
+3. Cấu hình biến môi trường (BẮT BUỘC để chạy AI):
+   - Tạo một bản sao của file `.env.example` và đổi tên nó thành `.env`.
+   - Mở file `.env` ra và điền key của bạn vào dòng: `OPENROUTER_API_KEY=your_key_here`
+   - *(Mẹo: Bạn có thể đăng ký tài khoản và lấy Key hoàn toàn miễn phí tại https://openrouter.ai/keys)*
+
+4. Khởi động môi trường dev (lệnh này sẽ chạy song song cả Web Frontend và API Server):
    ```bash
    npm run dev
    ```
-4. Mở trình duyệt và truy cập vào URL được in ra trong terminal (thường là `http://localhost:5173`).
+
+5. Mở trình duyệt và truy cập vào URL được in ra trong terminal (thường là `http://localhost:5173`).
